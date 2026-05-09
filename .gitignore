@@ -1,4 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment variables (CRITICAL - NEVER COMMIT THESE)
 .env
-node_modules
-coverage
-logs
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
