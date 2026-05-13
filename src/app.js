@@ -1,13 +1,13 @@
-require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
+require('dotenv').config();
 const compression = require('compression');
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./middleware/rateLimiter');
 const { trackUsage } = require('./middleware/usageTracking');
-const path = require('path');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -63,7 +63,16 @@ app.use((req, res, next) => {
 app.use('/api/', rateLimiter);
 
 // Root endpoint
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Root endpoint - serve landing page
 app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// JSON API endpoint for programmatic access
+app.get('/api', (req, res) => {
   res.json({
     success: true,
     message: 'Multi-tenant SaaS API is running',
@@ -71,7 +80,8 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       health: '/health',
-      api: '/api/v1'
+      api: '/api/v1',
+      docs: '/api/v1/subscriptions/plans'
     }
   });
 });
