@@ -15,7 +15,7 @@
   "test:ci": "jest --ci --coverage --selectProjects unit --maxWorkers=2",
   "lint": "eslint src/",
   "migrate": "node src/migrations/run.js",
-  "seed": "node src/seeds/run.js"
+  "seed": "node src/seeds/seed-data.js"
   },
   "dependencies": {
     "aws-sdk": "^2.1509.0",

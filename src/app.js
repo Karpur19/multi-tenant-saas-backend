@@ -7,6 +7,7 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./middleware/rateLimiter');
 const { trackUsage } = require('./middleware/usageTracking');
+const path = require('path');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -73,6 +74,14 @@ app.get('/', (req, res) => {
       api: '/api/v1'
     }
   });
+});
+
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Root route - serve landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Health check endpoint
