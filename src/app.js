@@ -8,6 +8,8 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./middleware/rateLimiter');
 const { trackUsage } = require('./middleware/usageTracking');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
@@ -58,6 +60,12 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Swagger API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Multi-Tenant SaaS API Docs'
+}));
 
 // Rate limiting
 app.use('/api/', rateLimiter);
