@@ -17,6 +17,7 @@ const userRoutes = require('./routes/user.routes');
 const resourceRoutes = require('./routes/resource.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const usageRoutes = require('./routes/usage.routes');
+app.use('/api/v1/admin', require('./routes/admin.routes'));
 
 // Initialize Express app
 const app = express();
