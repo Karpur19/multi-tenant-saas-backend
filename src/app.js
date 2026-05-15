@@ -17,7 +17,6 @@ const userRoutes = require('./routes/user.routes');
 const resourceRoutes = require('./routes/resource.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const usageRoutes = require('./routes/usage.routes');
-app.use('/api/v1/admin', require('./routes/admin.routes'));
 
 // Initialize Express app
 const app = express();
@@ -122,6 +121,8 @@ app.use('/api/v1/auth', authRoutes);
 
 // Subscription routes (some public endpoints like /plans)
 app.use('/api/v1/subscriptions', subscriptionRoutes);
+
+app.use('/api/v1/admin', require('./routes/admin.routes'));
 
 // Protected routes WITH usage tracking (these count towards API limits)
 app.use('/api/v1/users', userRoutes);
