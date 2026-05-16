@@ -70,13 +70,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // Rate limiting
 app.use('/api/', rateLimiter);
 
-// Root endpoint
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Root endpoint - serve landing page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Admin dashboard route
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // JSON API endpoint for programmatic access
@@ -89,17 +93,10 @@ app.get('/api', (req, res) => {
     endpoints: {
       health: '/health',
       api: '/api/v1',
-      docs: '/api/v1/subscriptions/plans'
+      docs: '/api-docs',
+      admin: '/admin'
     }
   });
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Root route - serve landing page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Health check endpoint
@@ -122,6 +119,7 @@ app.use('/api/v1/auth', authRoutes);
 // Subscription routes (some public endpoints like /plans)
 app.use('/api/v1/subscriptions', subscriptionRoutes);
 
+// Admin routes (protected)
 app.use('/api/v1/admin', require('./routes/admin.routes'));
 
 // Protected routes WITH usage tracking (these count towards API limits)
