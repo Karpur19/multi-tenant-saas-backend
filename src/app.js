@@ -31,12 +31,19 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'", 
-        "'unsafe-inline'", // Needed for admin dashboard inline scripts
-        "https://cdn.jsdelivr.net" // Chart.js CDN
+        "'unsafe-inline'",
+        "https://cdn.jsdelivr.net"
+      ],
+      scriptSrcElem: [
+        "'self'",
+        "https://cdn.jsdelivr.net"
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: [
+        "'self'",
+        "https://cdn.jsdelivr.net"  // Allow Chart.js source maps
+      ],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
