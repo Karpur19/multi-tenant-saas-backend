@@ -24,8 +24,26 @@ const app = express();
 // Trust proxy (important for rate limiting behind load balancer)
 app.set('trust proxy', 1);
 
-// Security middleware
-app.use(helmet());
+// Security middleware with CSP configured for admin dashboard
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", // Needed for admin dashboard inline scripts
+        "https://cdn.jsdelivr.net" // Chart.js CDN
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"]
+    }
+  }
+}));
 
 // CORS configuration
 const corsOptions = {
