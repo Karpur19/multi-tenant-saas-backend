@@ -36,13 +36,14 @@ app.use(helmet({
       ],
       scriptSrcElem: [
         "'self'",
+        "'unsafe-inline'",  // THIS WAS MISSING - needed for inline scripts
         "https://cdn.jsdelivr.net"
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: [
         "'self'",
-        "https://cdn.jsdelivr.net"  // Allow Chart.js source maps
+        "https://cdn.jsdelivr.net"
       ],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
