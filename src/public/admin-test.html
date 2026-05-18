@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin API Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: #1177bb;
+        }
+        pre {
+            background: #252526;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #3e3e42;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: #252526;
+            border: 1px solid #3e3e42;
+            color: #d4d4d4;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Admin API Test Tool</h1>
+        
+        <h3>Step 1: Login First</h3>
+        <input type="email" id="email" placeholder="Email" value="demo@example.com">
+        <input type="password" id="password" placeholder="Password" value="DemoPassword123!">
+        <button onclick="login()">Login</button>
+        
+        <h3>Step 2: Test Admin Endpoints</h3>
+        <button onclick="testEndpoint('/api/v1/admin/stats')">Test Stats</button>
+        <button onclick="testEndpoint('/api/v1/admin/tenants')">Test Tenants</button>
+        <button onclick="testEndpoint('/api/v1/admin/revenue')">Test Revenue</button>
+        
+        <h3>Results:</h3>
+        <pre id="output">Click login first, then test the endpoints...</pre>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('adminToken');
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const output = document.getElementById('output');
+
+            output.innerHTML = '<span class="success">Logging in...</span>';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    token = data.data.tokens.accessToken;
+                    localStorage.setItem('adminToken', token);
+                    output.innerHTML = '<span class="success">✅ Login successful!</span>\n\n' + 
+                        'Token: ' + token.substring(0, 50) + '...\n\n' +
+                        'User: ' + JSON.stringify(data.data.user, null, 2);
+                } else {
+                    output.innerHTML = '<span class="error">❌ Login failed:</span>\n\n' + 
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                output.innerHTML = '<span class="error">❌ Error:</span>\n\n' + error.message;
+            }
+        }
+
+        async function testEndpoint(url) {
+            const output = document.getElementById('output');
+
+            if (!token) {
+                output.innerHTML = '<span class="error">❌ Please login first!</span>';
+                return;
+            }
+
+            output.innerHTML = '<span class="success">Testing ' + url + '...</span>';
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 
+                        'Authorization': 'Bearer ' + token 
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    output.innerHTML = '<span class="success">✅ Success (' + response.status + ')</span>\n\n' + 
+                        JSON.stringify(data, null, 2);
+                } else {
+                    output.innerHTML = '<span class="error">❌ Error (' + response.status + ')</span>\n\n' + 
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                output.innerHTML = '<span class="error">❌ Error:</span>\n\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
