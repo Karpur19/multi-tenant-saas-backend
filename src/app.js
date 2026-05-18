@@ -32,11 +32,13 @@ app.use(helmet({
       scriptSrc: [
         "'self'", 
         "'unsafe-inline'",
+        "'unsafe-hashes'",  // Allow inline event handlers
         "https://cdn.jsdelivr.net"
       ],
+      scriptSrcAttr: ["'unsafe-inline'"],  // Allow onclick, etc
       scriptSrcElem: [
         "'self'",
-        "'unsafe-inline'",  // THIS WAS MISSING - needed for inline scripts
+        "'unsafe-inline'",
         "https://cdn.jsdelivr.net"
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
@@ -52,7 +54,6 @@ app.use(helmet({
     }
   }
 }));
-
 // CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGIN?.split(',') || '*',

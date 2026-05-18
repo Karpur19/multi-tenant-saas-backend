@@ -53,12 +53,12 @@
         <h3>Step 1: Login First</h3>
         <input type="email" id="email" placeholder="Email" value="demo@example.com">
         <input type="password" id="password" placeholder="Password" value="DemoPassword123!">
-        <button onclick="login()">Login</button>
+        <button id="loginBtn">Login</button>
         
         <h3>Step 2: Test Admin Endpoints</h3>
-        <button onclick="testEndpoint('/api/v1/admin/stats')">Test Stats</button>
-        <button onclick="testEndpoint('/api/v1/admin/tenants')">Test Tenants</button>
-        <button onclick="testEndpoint('/api/v1/admin/revenue')">Test Revenue</button>
+        <button id="testStats">Test Stats</button>
+        <button id="testTenants">Test Tenants</button>
+        <button id="testRevenue">Test Revenue</button>
         
         <h3>Results:</h3>
         <pre id="output">Click login first, then test the endpoints...</pre>
@@ -66,6 +66,12 @@
 
     <script>
         let token = localStorage.getItem('adminToken');
+
+        // Add event listeners properly (no inline handlers)
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('testStats').addEventListener('click', () => testEndpoint('/api/v1/admin/stats'));
+        document.getElementById('testTenants').addEventListener('click', () => testEndpoint('/api/v1/admin/tenants'));
+        document.getElementById('testRevenue').addEventListener('click', () => testEndpoint('/api/v1/admin/revenue'));
 
         async function login() {
             const email = document.getElementById('email').value;
