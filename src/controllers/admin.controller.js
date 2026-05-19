@@ -1,5 +1,4 @@
 const db = require('../config/database');
-const { successResponse, errorResponse } = require('../utils/response');
 const logger = require('../utils/logger');
 
 /**
@@ -7,17 +6,13 @@ const logger = require('../utils/logger');
  */
 const getStats = async (req, res) => {
   try {
-    // Get total counts
+    // Get total counts with safe defaults
     const tenantsResult = await db.query('SELECT COUNT(*) as count FROM tenants WHERE is_active = true');
     const usersResult = await db.query('SELECT COUNT(*) as count FROM users WHERE is_active = true');
     const subscriptionsResult = await db.query('SELECT COUNT(*) as count FROM subscriptions WHERE status = $1', ['active']);
     
-    // Get total API calls (safe query - returns 0 if table is empty)
-    const usageResult = await db.query(`
-      SELECT COALESCE(COUNT(*), 0) as total_calls
-      FROM usage_records
-      WHERE created_at >= DATE_TRUNC('month', CURRENT_DATE)
-    `);
+    // Simple API calls count
+    const usageResult = await db.query('SELECT COUNT(*) as total FROM usage_records WHERE created_at >= DATE_TRUNC(\'month\', CURRENT_DATE)');
     
     // Calculate MRR
     const revenueResult = await db.query(`
@@ -34,18 +29,25 @@ const getStats = async (req, res) => {
       WHERE s.status = 'active'
     `);
 
-    const stats = {
-      tenants: parseInt(tenantsResult.rows[0].count) || 0,
-      users: parseInt(usersResult.rows[0].count) || 0,
-      activeSubscriptions: parseInt(subscriptionsResult.rows[0].count) || 0,
-      apiCalls: parseInt(usageResult.rows[0].total_calls) || 0,
-      mrr: parseFloat(revenueResult.rows[0].mrr || 0).toFixed(2)
-    };
-
-    return successResponse(res, stats, 'Stats retrieved successfully');
+    return res.json({
+      success: true,
+      data: {
+        tenants: parseInt(tenantsResult.rows[0].count) || 0,
+        users: parseInt(usersResult.rows[0].count) || 0,
+        activeSubscriptions: parseInt(subscriptionsResult.rows[0].count) || 0,
+        apiCalls: parseInt(usageResult.rows[0].total) || 0,
+        mrr: parseFloat(revenueResult.rows[0].mrr || 0).toFixed(2)
+      }
+    });
   } catch (error) {
     logger.error('Get stats error', { error: error.message, stack: error.stack });
-    return errorResponse(res, 'Failed to retrieve stats: ' + error.message, 500);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'STATS_ERROR',
+        message: 'Failed to retrieve stats: ' + error.message
+      }
+    });
   }
 };
 
@@ -64,8 +66,7 @@ const getTenants = async (req, res) => {
         COUNT(DISTINCT u.id) as user_count,
         s.status as subscription_status,
         sp.name as plan_name,
-        sp.slug as plan_slug,
-        0 as total_api_calls
+        sp.slug as plan_slug
       FROM tenants t
       LEFT JOIN users u ON t.id = u.tenant_id AND u.is_active = true
       LEFT JOIN subscriptions s ON t.id = s.tenant_id AND s.status = 'active'
@@ -74,10 +75,25 @@ const getTenants = async (req, res) => {
       ORDER BY t.created_at DESC
     `);
 
-    return successResponse(res, { tenants: result.rows }, 'Tenants retrieved successfully');
+    // Add total_api_calls as 0 for now
+    const tenants = result.rows.map(t => ({
+      ...t,
+      total_api_calls: 0
+    }));
+
+    return res.json({
+      success: true,
+      data: { tenants }
+    });
   } catch (error) {
     logger.error('Get tenants error', { error: error.message, stack: error.stack });
-    return errorResponse(res, 'Failed to retrieve tenants: ' + error.message, 500);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'TENANTS_ERROR',
+        message: 'Failed to retrieve tenants: ' + error.message
+      }
+    });
   }
 };
 
@@ -111,10 +127,19 @@ const getRevenueBreakdown = async (req, res) => {
       ORDER BY sp.display_order
     `);
 
-    return successResponse(res, { revenue: result.rows }, 'Revenue breakdown retrieved successfully');
+    return res.json({
+      success: true,
+      data: { revenue: result.rows }
+    });
   } catch (error) {
     logger.error('Get revenue error', { error: error.message, stack: error.stack });
-    return errorResponse(res, 'Failed to retrieve revenue: ' + error.message, 500);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'REVENUE_ERROR',
+        message: 'Failed to retrieve revenue: ' + error.message
+      }
+    });
   }
 };
 
@@ -123,13 +148,19 @@ const getRevenueBreakdown = async (req, res) => {
  */
 const getUsageAnalytics = async (req, res) => {
   try {
-    // Return empty analytics for now since usage_aggregates might not have data
-    const result = { rows: [] };
-
-    return successResponse(res, { analytics: result.rows }, 'Usage analytics retrieved successfully');
+    return res.json({
+      success: true,
+      data: { analytics: [] }
+    });
   } catch (error) {
     logger.error('Get usage analytics error', { error: error.message });
-    return errorResponse(res, 'Failed to retrieve usage analytics: ' + error.message, 500);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'ANALYTICS_ERROR',
+        message: 'Failed to retrieve analytics: ' + error.message
+      }
+    });
   }
 };
 
@@ -138,13 +169,19 @@ const getUsageAnalytics = async (req, res) => {
  */
 const getTopEndpoints = async (req, res) => {
   try {
-    // Return empty for now
-    const result = { rows: [] };
-
-    return successResponse(res, { endpoints: result.rows }, 'Top endpoints retrieved successfully');
+    return res.json({
+      success: true,
+      data: { endpoints: [] }
+    });
   } catch (error) {
     logger.error('Get top endpoints error', { error: error.message });
-    return errorResponse(res, 'Failed to retrieve top endpoints: ' + error.message, 500);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'ENDPOINTS_ERROR',
+        message: 'Failed to retrieve endpoints: ' + error.message
+      }
+    });
   }
 };
 
