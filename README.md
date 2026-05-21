@@ -90,7 +90,7 @@ Full Swagger/OpenAPI 3.0 specification with try-it-out functionality:
 
 
 
-\*\*\[View API Docs](https://multi-tenant-saas-backend-lars.onrender.com/api-docs)\*\*
+\*\*\[View API Docs] https://multi-tenant-saas-backend-lars.onrender.com/api-docs
 
 
 
@@ -110,7 +110,7 @@ Real-time analytics dashboard with interactive charts and metrics:
 
 
 
-\*\*\[View Admin Dashboard](https://multi-tenant-saas-backend-lars.onrender.com/admin)\*\*
+\*\*\[View Admin Dashboard] https://multi-tenant-saas-backend-lars.onrender.com/admin
 
 
 
