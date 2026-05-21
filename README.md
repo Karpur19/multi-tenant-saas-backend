@@ -3,7 +3,7 @@
 Enterprise-grade REST API with subscription management and usage metering built with Node.js, Express, and PostgreSQL.
 
 
-\*\*🔗 Live Demo:\*\* \[https://multi-tenant-saas-backend-lars.onrender.com]
+\*\*🔗 Live Demo:\*\* https://multi-tenant-saas-backend-lars.onrender.com
 
 
 \## 📊 Project Stats
