@@ -1,18 +1,12 @@
 \# 🚀 Multi-Tenant SaaS Backend
 
-
-
 Enterprise-grade REST API with subscription management and usage metering built with Node.js, Express, and PostgreSQL.
 
 
-
-\*\*🔗 Live Demo:\*\* \[https://multi-tenant-saas-backend-lars.onrender.com](https://multi-tenant-saas-backend-lars.onrender.com)
-
+\*\*🔗 Live Demo:\*\* \[https://multi-tenant-saas-backend-lars.onrender.com]
 
 
 \## 📊 Project Stats
-
-
 
 \- \*\*26\*\* REST API Endpoints
 
@@ -27,8 +21,6 @@ Enterprise-grade REST API with subscription management and usage metering built 
 
 
 \## ✨ Key Features
-
-
 
 \### 🏢 Multi-Tenancy Architecture
 
