@@ -1,14 +1,22 @@
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
-// Create connection pool with proper SSL config for Neon
+// Determine SSL configuration
+const getSSLConfig = () => {
+  // Explicitly disabled (CI/test environment)
+  if (process.env.DB_SSL === 'false') return false;
+  // Local development without DATABASE_URL
+  if (!process.env.DATABASE_URL) return false;
+  // Production/Neon - require SSL
+  return { rejectUnauthorized: false };
+};
+
+// Create connection pool
 const pool = new Pool(
-  process.env.DATABASE_URL 
+  process.env.DATABASE_URL
     ? {
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false // Required for Neon
-        }
+        ssl: getSSLConfig()
       }
     : {
         host: process.env.DB_HOST || 'localhost',
@@ -16,6 +24,7 @@ const pool = new Pool(
         database: process.env.DB_NAME,
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
+        ssl: getSSLConfig(),
         max: 20,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 10000,
@@ -38,18 +47,18 @@ const query = async (text, params, tenantId = null) => {
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    logger.debug('Database query executed', { 
-      query: text.substring(0, 100), 
+    logger.debug('Database query executed', {
+      query: text.substring(0, 100),
       duration: `${duration}ms`,
       rows: result.rowCount,
-      tenantId 
+      tenantId
     });
     return result;
   } catch (error) {
-    logger.error('Database query error', { 
+    logger.error('Database query error', {
       error: error.message,
       query: text.substring(0, 100),
-      tenantId 
+      tenantId
     });
     throw error;
   }
