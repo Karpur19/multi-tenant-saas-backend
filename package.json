@@ -15,7 +15,14 @@
     "test:ci": "jest --ci --coverage --selectProjects unit --maxWorkers=2",
     "lint": "eslint src/",
     "migrate": "node src/migrations/run.js",
-    "seed": "node src/seeds/seed-data.js"
+    "seed": "node src/seeds/seed-data.js",
+    "docker:build": "docker build -t saas-backend .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env saas-backend",
+    "docker:up": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f app",
+    "docker:clean": "docker-compose down -v --remove-orphans",
+    "docker:test": "docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit"
   },
   "dependencies": {
     "aws-sdk": "^2.1509.0",

@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: saas-backend-test
+    environment:
+      - NODE_ENV=test
+      - PORT=3000
+      - DATABASE_URL=postgresql://postgres:postgres@db-test:5432/saas_test
+      - JWT_SECRET=test-jwt-secret
+      - JWT_REFRESH_SECRET=test-refresh-secret
+      - JWT_EXPIRES_IN=1h
+      - JWT_REFRESH_EXPIRES_IN=1d
+    depends_on:
+      db-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: ["node", "-e", "console.log('Test container ready')"]
+
+  db-test:
+    image: postgres:16-alpine
+    container_name: saas-postgres-test
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=saas_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d saas_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+    tmpfs:
+      - /var/lib/postgresql/data  # In-memory for speed
+
+networks:
+  test-network:
+    driver: bridge
