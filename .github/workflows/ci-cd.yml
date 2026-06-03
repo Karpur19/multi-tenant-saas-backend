@@ -35,7 +35,7 @@ jobs:
 
     env:
       NODE_ENV: test
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saas_test?sslmode=disable
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saas_test
       DB_HOST: localhost
       DB_PORT: 5432
       DB_NAME: saas_test
@@ -60,19 +60,21 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🗄️ Apply schema directly via psql
+      - name: 🗄️ Run migration 001 - Initial Schema
         run: |
-          # Find and run all migration SQL files directly
           PGPASSWORD=postgres psql \
             -h localhost \
             -U postgres \
             -d saas_test \
             -f src/migrations/001_initial_schema.sql
-        continue-on-error: true
 
-      - name: 🗄️ Run migrations via npm
-        run: npm run migrate
-        continue-on-error: true
+      - name: 🗄️ Run migration 002 - Subscription System
+        run: |
+          PGPASSWORD=postgres psql \
+            -h localhost \
+            -U postgres \
+            -d saas_test \
+            -f src/migrations/002_subscription_system.sql
 
       - name: ✅ Verify tables exist
         run: |
