@@ -156,6 +156,9 @@ app.use('/api/v1/resources', resourceRoutes);
 // Usage routes (don't track themselves to avoid infinite loop)
 app.use('/api/v1/usage', usageRoutes);
 
+// Billing routes (Razorpay)
+app.use('/api/v1/billing', require('./routes/billing.routes'));
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
