@@ -3,7 +3,7 @@ const razorpayService = require('../services/razorpay.service');
 const logger = require('../utils/logger');
 
 /**
- * Create Razorpay order (Step 1 of payment flow)
+ * Create Razorpay order
  */
 const createOrder = async (req, res) => {
   try {
@@ -18,7 +18,6 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Get plan details
     const planResult = await db.query(
       'SELECT * FROM subscription_plans WHERE slug = $1 AND is_active = true',
       [planSlug]
@@ -32,15 +31,12 @@ const createOrder = async (req, res) => {
     }
 
     const plan = planResult.rows[0];
-
-    // Get amount in USD then convert to INR
     const usdAmount = billingCycle === 'yearly'
       ? parseFloat(plan.price_yearly)
       : parseFloat(plan.price_monthly);
 
     const inrAmount = razorpayService.convertUSDtoINR(usdAmount);
 
-    // Create Razorpay order
     const order = await razorpayService.createOrder({
       amount: inrAmount,
       currency: 'INR',
@@ -50,24 +46,14 @@ const createOrder = async (req, res) => {
       billingCycle
     });
 
-    // Save order to database
     await db.query(`
       INSERT INTO payment_sessions
-        (session_id, tenant_id, user_id, plan_id, amount, 
+        (session_id, tenant_id, user_id, plan_id, amount,
          billing_cycle, status, metadata)
       VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
     `, [
-      order.id,
-      tenantId,
-      userId,
-      plan.id,
-      usdAmount,
-      billingCycle,
-      JSON.stringify({
-        planSlug: plan.slug,
-        inrAmount,
-        razorpayOrderId: order.id
-      })
+      order.id, tenantId, userId, plan.id, usdAmount, billingCycle,
+      JSON.stringify({ planSlug: plan.slug, inrAmount, razorpayOrderId: order.id })
     ]);
 
     logger.info('Order created', { orderId: order.id, tenantId, planSlug });
@@ -76,17 +62,12 @@ const createOrder = async (req, res) => {
       success: true,
       data: {
         orderId: order.id,
-        amount: order.amount,         // In paise
-        amountDisplay: inrAmount,     // In INR
-        amountUSD: usdAmount,         // In USD
+        amount: order.amount,
+        amountDisplay: inrAmount,
+        amountUSD: usdAmount,
         currency: order.currency,
-        plan: {
-          name: plan.name,
-          slug: plan.slug,
-          billingCycle
-        },
-        razorpayKeyId: process.env.RAZORPAY_KEY_ID,  // Frontend needs this
-        // Test cards info
+        plan: { name: plan.name, slug: plan.slug, billingCycle },
+        razorpayKeyId: process.env.RAZORPAY_KEY_ID,
         testCards: {
           success: { number: '4111 1111 1111 1111', expiry: '12/29', cvv: '123' },
           failure: { number: '4000 0000 0000 0002', expiry: '12/29', cvv: '123' }
@@ -95,7 +76,7 @@ const createOrder = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Create order error', { 
+    logger.error('Create order error', {
       error: error.message,
       stack: error.stack,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID ? 'SET' : 'MISSING',
@@ -103,25 +84,21 @@ const createOrder = async (req, res) => {
     });
     return res.status(500).json({
       success: false,
-      error: { 
-        code: 'ORDER_ERROR', 
+      error: {
+        code: 'ORDER_ERROR',
         message: error.message,
-        detail: error.description || error.error || null
+        detail: error.description || null
       }
     });
   }
+};
 
 /**
- * Verify payment and activate subscription (Step 2)
+ * Verify Razorpay payment
  */
 const verifyPayment = async (req, res) => {
   try {
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    } = req.body;
-
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const tenantId = req.user.tenantId;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -129,12 +106,11 @@ const verifyPayment = async (req, res) => {
         success: false,
         error: {
           code: 'MISSING_FIELDS',
-          message: 'razorpay_order_id, razorpay_payment_id and razorpay_signature are required'
+          message: 'razorpay_order_id, razorpay_payment_id and razorpay_signature required'
         }
       });
     }
 
-    // CRITICAL: Verify payment signature
     const isValid = razorpayService.verifyPaymentSignature({
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
@@ -142,14 +118,12 @@ const verifyPayment = async (req, res) => {
     });
 
     if (!isValid) {
-      logger.warn('Invalid payment signature', { razorpay_order_id });
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_SIGNATURE', message: 'Payment verification failed' }
       });
     }
 
-    // Get session from database
     const sessionResult = await db.query(
       'SELECT * FROM payment_sessions WHERE session_id = $1',
       [razorpay_order_id]
@@ -164,10 +138,8 @@ const verifyPayment = async (req, res) => {
 
     const session = sessionResult.rows[0];
 
-    // Fetch payment details from Razorpay
     const payment = await razorpayService.getPayment(razorpay_payment_id);
 
-    // Get plan
     const planResult = await db.query(
       'SELECT * FROM subscription_plans WHERE id = $1',
       [session.plan_id]
@@ -181,7 +153,6 @@ const verifyPayment = async (req, res) => {
 
     const subscriptionId = `sub_rzp_${razorpay_payment_id}`;
 
-    // Activate subscription
     await db.query(`
       INSERT INTO subscriptions
         (tenant_id, plan_id, status, billing_cycle,
@@ -198,38 +169,29 @@ const verifyPayment = async (req, res) => {
         current_period_end = EXCLUDED.current_period_end,
         updated_at = NOW()
     `, [
-      session.tenant_id,
-      session.plan_id,
-      session.billing_cycle,
-      subscriptionId,
-      payment.contact || 'rzp_customer',
-      periodStart,
-      periodEnd
+      session.tenant_id, session.plan_id, session.billing_cycle,
+      subscriptionId, payment.contact || 'rzp_customer',
+      periodStart, periodEnd
     ]);
 
-    // Record transaction
     await db.query(`
       INSERT INTO payment_transactions
         (tenant_id, session_id, amount, status, plan_name,
          payment_method, card_last_four, description)
       VALUES ($1, $2, $3, 'succeeded', $4, $5, $6, $7)
     `, [
-      session.tenant_id,
-      razorpay_order_id,
-      session.amount,
-      plan.name,
-      payment.method || 'razorpay',
+      session.tenant_id, razorpay_order_id, session.amount,
+      plan.name, payment.method || 'razorpay',
       payment.card?.last4 || '****',
       `Subscription to ${plan.name} (${session.billing_cycle}) via Razorpay`
     ]);
 
-    // Mark session complete
     await db.query(
       'UPDATE payment_sessions SET status = $1, completed_at = NOW() WHERE session_id = $2',
       ['completed', razorpay_order_id]
     );
 
-    logger.info('Payment verified and subscription activated', {
+    logger.info('Payment verified', {
       orderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
       tenantId,
@@ -262,56 +224,6 @@ const verifyPayment = async (req, res) => {
       success: false,
       error: { code: 'VERIFY_ERROR', message: error.message }
     });
-  }
-};
-
-/**
- * Handle Razorpay webhooks
- */
-const handleWebhook = async (req, res) => {
-  try {
-    const signature = req.headers['x-razorpay-signature'];
-    const isValid = razorpayService.verifyWebhookSignature(req.body, signature);
-
-    if (!isValid) {
-      return res.status(400).json({ error: 'Invalid webhook signature' });
-    }
-
-    const event = req.body;
-    logger.info('Razorpay webhook received', { event: event.event });
-
-    switch (event.event) {
-      case 'payment.captured': {
-        logger.info('Payment captured', { paymentId: event.payload.payment.entity.id });
-        break;
-      }
-      case 'payment.failed': {
-        const payment = event.payload.payment.entity;
-        await db.query(`
-          UPDATE payment_sessions
-          SET status = 'failed'
-          WHERE session_id = $1
-        `, [payment.order_id]);
-        logger.warn('Payment failed', { paymentId: payment.id });
-        break;
-      }
-      case 'subscription.cancelled': {
-        const sub = event.payload.subscription.entity;
-        await db.query(`
-          UPDATE subscriptions
-          SET status = 'cancelled', updated_at = NOW()
-          WHERE stripe_subscription_id = $1
-        `, [`sub_rzp_${sub.id}`]);
-        break;
-      }
-      default:
-        logger.info('Unhandled webhook', { event: event.event });
-    }
-
-    return res.json({ received: true });
-  } catch (error) {
-    logger.error('Webhook error', { error: error.message });
-    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 };
 
@@ -351,6 +263,7 @@ const getBillingInfo = async (req, res) => {
         hasActivePlan: result.rows.length > 0
       }
     });
+
   } catch (error) {
     logger.error('Get billing info error', { error: error.message });
     return res.status(500).json({
@@ -392,6 +305,7 @@ const cancelSubscription = async (req, res) => {
         cancelAt: subResult.rows[0].current_period_end
       }
     });
+
   } catch (error) {
     logger.error('Cancel subscription error', { error: error.message });
     return res.status(500).json({
@@ -401,10 +315,57 @@ const cancelSubscription = async (req, res) => {
   }
 };
 
+/**
+ * Handle Razorpay webhooks
+ */
+const handleWebhook = async (req, res) => {
+  try {
+    const signature = req.headers['x-razorpay-signature'];
+    const isValid = razorpayService.verifyWebhookSignature(req.body, signature);
+
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid webhook signature' });
+    }
+
+    const event = req.body;
+    logger.info('Razorpay webhook received', { event: event.event });
+
+    switch (event.event) {
+      case 'payment.captured':
+        logger.info('Payment captured', { paymentId: event.payload.payment.entity.id });
+        break;
+      case 'payment.failed': {
+        const payment = event.payload.payment.entity;
+        await db.query(
+          'UPDATE payment_sessions SET status = $1 WHERE session_id = $2',
+          ['failed', payment.order_id]
+        );
+        break;
+      }
+      case 'subscription.cancelled': {
+        const sub = event.payload.subscription.entity;
+        await db.query(
+          'UPDATE subscriptions SET status = $1, updated_at = NOW() WHERE stripe_subscription_id = $2',
+          ['cancelled', `sub_rzp_${sub.id}`]
+        );
+        break;
+      }
+      default:
+        logger.info('Unhandled webhook', { event: event.event });
+    }
+
+    return res.json({ received: true });
+
+  } catch (error) {
+    logger.error('Webhook error', { error: error.message });
+    return res.status(500).json({ error: 'Webhook processing failed' });
+  }
+};
+
 module.exports = {
   createOrder,
   verifyPayment,
-  handleWebhook,
   getBillingInfo,
-  cancelSubscription
+  cancelSubscription,
+  handleWebhook
 };
