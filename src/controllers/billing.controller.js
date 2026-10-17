@@ -7,7 +7,7 @@ const createOrder = async (req, res) => {
     const planSlug = req.body.planSlug;
     const billingCycle = req.body.billingCycle || 'monthly';
     const tenantId = req.user.tenantId;
-    const userId = req.user.id;
+    const userId = req.user.userId;
 
     if (!planSlug) {
       return res.status(400).json({
