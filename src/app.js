@@ -159,6 +159,11 @@ app.use('/api/v1/usage', usageRoutes);
 // Billing routes (Razorpay)
 app.use('/api/v1/billing', require('./routes/billing.routes'));
 
+// Billing test page
+app.get('/billing-test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'billing-test.html'));
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({

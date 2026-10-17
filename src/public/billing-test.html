@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Test - Razorpay</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 5px; }
+        p { color: #666; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            display: none;
+        }
+        .result.success { background: #d4edda; color: #155724; }
+        .result.error { background: #f8d7da; color: #721c24; }
+        .test-cards {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .test-cards h4 { margin: 0 0 10px 0; color: #333; }
+        .test-cards p { margin: 4px 0; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>💳 Razorpay Test</h1>
+        <p>Test the full payment flow with Razorpay checkout</p>
+
+        <div class="test-cards">
+            <h4>🧪 Test Card Details:</h4>
+            <p>Card: <strong>4111 1111 1111 1111</strong></p>
+            <p>Expiry: <strong>12/29</strong> | CVV: <strong>123</strong></p>
+            <p>OTP: <strong>1234</strong> (if asked)</p>
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" value="demo@example.com">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" value="DemoPassword123!">
+        </div>
+        <div class="form-group">
+            <label>Plan</label>
+            <select id="plan">
+                <option value="starter">Starter - $29/month</option>
+                <option value="pro" selected>Pro - $99/month</option>
+                <option value="enterprise">Enterprise - $299/month</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Billing Cycle</label>
+            <select id="billingCycle">
+                <option value="monthly" selected>Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+        </div>
+
+        <button id="payBtn">🚀 Start Payment</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        document.getElementById('payBtn').addEventListener('click', startPayment);
+
+        async function startPayment() {
+            const btn = document.getElementById('payBtn');
+            const result = document.getElementById('result');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            result.style.display = 'none';
+
+            try {
+                // Step 1: Login
+                showResult('Step 1: Logging in...', 'success');
+                const loginRes = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value
+                    })
+                });
+                const loginData = await loginRes.json();
+                if (!loginData.success) {
+                    throw new Error('Login failed: ' + (loginData.error?.message || 'Unknown'));
+                }
+                authToken = loginData.data.tokens.accessToken;
+                showResult('Step 1: Login successful!', 'success');
+
+                // Step 2: Create Razorpay Order
+                showResult('Step 2: Creating order...', 'success');
+                const orderRes = await fetch('/api/v1/billing/order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + authToken
+                    },
+                    body: JSON.stringify({
+                        planSlug: document.getElementById('plan').value,
+                        billingCycle: document.getElementById('billingCycle').value
+                    })
+                });
+                const orderData = await orderRes.json();
+                if (!orderData.success) {
+                    throw new Error('Order failed: ' + (orderData.error?.message || 'Unknown'));
+                }
+
+                const order = orderData.data;
+                showResult('Step 2: Order created!\nOrder ID: ' + order.orderId + '\nAmount: ₹' + (order.amount/100).toFixed(2), 'success');
+
+                // Step 3: Open Razorpay Checkout
+                showResult('Step 3: Opening Razorpay checkout...', 'success');
+
+                const options = {
+                    key: order.razorpayKeyId,
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: 'Multi-Tenant SaaS',
+                    description: order.plan.name + ' Plan (' + order.plan.billingCycle + ')',
+                    order_id: order.orderId,
+                    handler: async function(response) {
+                        // Step 4: Verify Payment
+                        showResult('Step 4: Verifying payment...', 'success');
+                        try {
+                            const verifyRes = await fetch('/api/v1/billing/verify', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + authToken
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature
+                                })
+                            });
+                            const verifyData = await verifyRes.json();
+                            if (verifyData.success) {
+                                showResult(
+                                    'PAYMENT SUCCESSFUL!\n\n' +
+                                    'Payment ID: ' + response.razorpay_payment_id + '\n' +
+                                    'Order ID: ' + response.razorpay_order_id + '\n' +
+                                    'Plan: ' + verifyData.data.plan.name + '\n' +
+                                    'Status: ' + verifyData.data.subscription.status + '\n' +
+                                    'Valid Until: ' + new Date(verifyData.data.subscription.currentPeriodEnd).toLocaleDateString(),
+                                    'success'
+                                );
+                            } else {
+                                showResult('Verification failed: ' + JSON.stringify(verifyData.error), 'error');
+                            }
+                        } catch (err) {
+                            showResult('Verification error: ' + err.message, 'error');
+                        }
+                        btn.disabled = false;
+                        btn.textContent = 'Start Payment';
+                    },
+                    prefill: {
+                        email: document.getElementById('email').value,
+                        name: 'Demo User'
+                    },
+                    theme: { color: '#667eea' },
+                    modal: {
+                        ondismiss: function() {
+                            showResult('Payment cancelled by user', 'error');
+                            btn.disabled = false;
+                            btn.textContent = 'Start Payment';
+                        }
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (error) {
+                showResult('Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Start Payment';
+            }
+        }
+
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.textContent = message;
+            result.className = 'result ' + type;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
