@@ -95,13 +95,21 @@ const createOrder = async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Create order error', { error: error.message });
+    logger.error('Create order error', { 
+      error: error.message,
+      stack: error.stack,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID ? 'SET' : 'MISSING',
+      razorpaySecret: process.env.RAZORPAY_KEY_SECRET ? 'SET' : 'MISSING'
+    });
     return res.status(500).json({
       success: false,
-      error: { code: 'ORDER_ERROR', message: error.message }
+      error: { 
+        code: 'ORDER_ERROR', 
+        message: error.message,
+        detail: error.description || error.error || null
+      }
     });
   }
-};
 
 /**
  * Verify payment and activate subscription (Step 2)
