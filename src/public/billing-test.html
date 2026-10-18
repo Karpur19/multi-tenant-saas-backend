@@ -6,239 +6,265 @@
     <title>Billing Test - Razorpay</title>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f7fa;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            padding: 20px;
         }
         .card {
             background: white;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            max-width: 500px;
             width: 100%;
+            max-width: 480px;
         }
-        h1 { color: #333; margin-bottom: 5px; }
-        p { color: #666; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; color: #555; }
-        input, select {
+        h1 { color: #333; font-size: 24px; margin-bottom: 8px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+        .test-card-box {
+            background: #f0f4ff;
+            border: 1px solid #c7d7ff;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+        .test-card-box h4 { color: #4a5568; margin-bottom: 8px; font-size: 13px; }
+        .test-card-box p { color: #555; margin-bottom: 4px; line-height: 1.5; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; color: #444; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+        .form-group input,
+        .form-group select {
             width: 100%;
-            padding: 12px;
+            padding: 10px 14px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 14px;
-            box-sizing: border-box;
+            color: #333;
+            background: white;
         }
-        button {
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .pay-btn {
             width: 100%;
             padding: 14px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            margin-top: 8px;
+            transition: opacity 0.2s;
         }
-        button:hover { opacity: 0.9; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 13px;
-            white-space: pre-wrap;
+        .pay-btn:hover { opacity: 0.92; }
+        .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .result-box {
             display: none;
-        }
-        .result.success { background: #d4edda; color: #155724; }
-        .result.error { background: #f8d7da; color: #721c24; }
-        .test-cards {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 8px;
             font-size: 13px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
         }
-        .test-cards h4 { margin: 0 0 10px 0; color: #333; }
-        .test-cards p { margin: 4px 0; color: #666; }
+        .result-box.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .result-box.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>💳 Razorpay Test</h1>
-        <p>Test the full payment flow with Razorpay checkout</p>
+        <h1>💳 Razorpay Payment Test</h1>
+        <p class="subtitle">Complete a test payment with Razorpay</p>
 
-        <div class="test-cards">
-            <h4>🧪 Test Card Details:</h4>
-            <p>Card: <strong>4111 1111 1111 1111</strong></p>
-            <p>Expiry: <strong>12/29</strong> | CVV: <strong>123</strong></p>
-            <p>OTP: <strong>1234</strong> (if asked)</p>
+        <div class="test-card-box">
+            <h4>🧪 Use these test card details inside Razorpay:</h4>
+            <p><strong>Card Number:</strong> 4718 6094 0849 6320</p>
+            <p><strong>Expiry:</strong> 12/26 &nbsp; <strong>CVV:</strong> 123</p>
+            <p><strong>OTP:</strong> 1234 (when asked)</p>
         </div>
 
         <div class="form-group">
             <label>Email</label>
-            <input type="email" id="email" value="demo@example.com">
+            <input type="email" id="emailInput" value="demo@example.com">
         </div>
+
         <div class="form-group">
             <label>Password</label>
-            <input type="password" id="password" value="DemoPassword123!">
+            <input type="password" id="passwordInput" value="DemoPassword123!">
         </div>
+
+        <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="tel" id="mobileInput" value="9999999999">
+        </div>
+
         <div class="form-group">
             <label>Plan</label>
-            <select id="plan">
-                <option value="starter">Starter - $29/month</option>
-                <option value="pro" selected>Pro - $99/month</option>
-                <option value="enterprise">Enterprise - $299/month</option>
+            <select id="planSelect">
+                <option value="starter">Starter - $29 / month</option>
+                <option value="pro" selected>Pro - $99 / month</option>
+                <option value="enterprise">Enterprise - $299 / month</option>
             </select>
         </div>
+
         <div class="form-group">
             <label>Billing Cycle</label>
-            <select id="billingCycle">
+            <select id="cycleSelect">
                 <option value="monthly" selected>Monthly</option>
                 <option value="yearly">Yearly</option>
             </select>
         </div>
 
-        <button id="payBtn">🚀 Start Payment</button>
+        <button class="pay-btn" id="payButton">🚀 Start Payment</button>
 
-        <div class="result" id="result"></div>
+        <div class="result-box" id="resultBox"></div>
     </div>
 
     <script>
-        let authToken = null;
+        var token = null;
 
-        document.getElementById('payBtn').addEventListener('click', startPayment);
+        function showMsg(msg, type) {
+            var box = document.getElementById('resultBox');
+            box.textContent = msg;
+            box.className = 'result-box ' + type;
+            box.style.display = 'block';
+        }
 
-        async function startPayment() {
-            const btn = document.getElementById('payBtn');
-            const result = document.getElementById('result');
+        function resetBtn() {
+            var btn = document.getElementById('payButton');
+            btn.disabled = false;
+            btn.textContent = 'Start Payment';
+        }
+
+        document.getElementById('payButton').addEventListener('click', function() {
+            var btn = document.getElementById('payButton');
             btn.disabled = true;
-            btn.textContent = 'Processing...';
-            result.style.display = 'none';
+            btn.textContent = 'Please wait...';
 
-            try {
-                // Step 1: Login
-                showResult('Step 1: Logging in...', 'success');
-                const loginRes = await fetch('/api/v1/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    })
-                });
-                const loginData = await loginRes.json();
-                if (!loginData.success) {
-                    throw new Error('Login failed: ' + (loginData.error?.message || 'Unknown'));
+            var email    = document.getElementById('emailInput').value;
+            var password = document.getElementById('passwordInput').value;
+            var mobile   = document.getElementById('mobileInput').value;
+            var plan     = document.getElementById('planSelect').value;
+            var cycle    = document.getElementById('cycleSelect').value;
+
+            showMsg('Step 1: Logging in...', 'success');
+
+            fetch('/api/v1/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    throw new Error('Login failed: ' + data.error.message);
                 }
-                authToken = loginData.data.tokens.accessToken;
-                showResult('Step 1: Login successful!', 'success');
+                token = data.data.tokens.accessToken;
+                showMsg('Step 1: Login OK\nStep 2: Creating order...', 'success');
 
-                // Step 2: Create Razorpay Order
-                showResult('Step 2: Creating order...', 'success');
-                const orderRes = await fetch('/api/v1/billing/order', {
+                return fetch('/api/v1/billing/order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + authToken
+                        'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({
-                        planSlug: document.getElementById('plan').value,
-                        billingCycle: document.getElementById('billingCycle').value
-                    })
+                    body: JSON.stringify({ planSlug: plan, billingCycle: cycle })
                 });
-                const orderData = await orderRes.json();
-                if (!orderData.success) {
-                    throw new Error('Order failed: ' + (orderData.error?.message || 'Unknown'));
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) {
+                    throw new Error('Order error: ' + data.error.message);
                 }
 
-                const order = orderData.data;
-                showResult('Step 2: Order created!\nOrder ID: ' + order.orderId + '\nAmount: ₹' + (order.amount/100).toFixed(2), 'success');
+                var orderId    = data.data.orderId;
+                var amount     = data.data.amount;
+                var currency   = data.data.currency;
+                var keyId      = data.data.razorpayKeyId;
+                var planName   = data.data.plan.name;
+                var planCycle  = data.data.plan.billingCycle;
 
-                // Step 3: Open Razorpay Checkout
-                showResult('Step 3: Opening Razorpay checkout...', 'success');
+                showMsg('Step 1: Login OK\nStep 2: Order created: ' + orderId + '\nStep 3: Opening Razorpay...', 'success');
 
-                const options = {
-                    key: order.razorpayKeyId,
-                    amount: order.amount,
-                    currency: order.currency,
+                var options = {
+                    key: keyId,
+                    amount: amount,
+                    currency: currency,
                     name: 'Multi-Tenant SaaS',
-                    description: order.plan.name + ' Plan (' + order.plan.billingCycle + ')',
-                    order_id: order.orderId,
-                    handler: async function(response) {
-                        // Step 4: Verify Payment
-                        showResult('Step 4: Verifying payment...', 'success');
-                        try {
-                            const verifyRes = await fetch('/api/v1/billing/verify', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': 'Bearer ' + authToken
-                                },
-                                body: JSON.stringify({
-                                    razorpay_order_id: response.razorpay_order_id,
-                                    razorpay_payment_id: response.razorpay_payment_id,
-                                    razorpay_signature: response.razorpay_signature
-                                })
-                            });
-                            const verifyData = await verifyRes.json();
-                            if (verifyData.success) {
-                                showResult(
+                    description: planName + ' (' + planCycle + ')',
+                    order_id: orderId,
+                    prefill: {
+                        name: 'Demo User',
+                        email: email,
+                        contact: mobile
+                    },
+                    theme: { color: '#667eea' },
+                    handler: function(resp) {
+                        showMsg('Step 4: Verifying payment...', 'success');
+
+                        fetch('/api/v1/billing/verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + token
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id:   resp.razorpay_order_id,
+                                razorpay_payment_id: resp.razorpay_payment_id,
+                                razorpay_signature:  resp.razorpay_signature
+                            })
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(vData) {
+                            if (vData.success) {
+                                var endDate = new Date(vData.data.subscription.currentPeriodEnd).toLocaleDateString();
+                                showMsg(
                                     'PAYMENT SUCCESSFUL!\n\n' +
-                                    'Payment ID: ' + response.razorpay_payment_id + '\n' +
-                                    'Order ID: ' + response.razorpay_order_id + '\n' +
-                                    'Plan: ' + verifyData.data.plan.name + '\n' +
-                                    'Status: ' + verifyData.data.subscription.status + '\n' +
-                                    'Valid Until: ' + new Date(verifyData.data.subscription.currentPeriodEnd).toLocaleDateString(),
+                                    'Payment ID : ' + resp.razorpay_payment_id + '\n' +
+                                    'Order ID   : ' + resp.razorpay_order_id + '\n' +
+                                    'Plan       : ' + vData.data.plan.name + '\n' +
+                                    'Amount     : $' + vData.data.plan.amount + '\n' +
+                                    'Status     : ' + vData.data.subscription.status + '\n' +
+                                    'Valid Until: ' + endDate,
                                     'success'
                                 );
                             } else {
-                                showResult('Verification failed: ' + JSON.stringify(verifyData.error), 'error');
+                                showMsg('Verification failed:\n' + JSON.stringify(vData.error, null, 2), 'error');
                             }
-                        } catch (err) {
-                            showResult('Verification error: ' + err.message, 'error');
-                        }
-                        btn.disabled = false;
-                        btn.textContent = 'Start Payment';
+                            resetBtn();
+                        })
+                        .catch(function(e) {
+                            showMsg('Verify error: ' + e.message, 'error');
+                            resetBtn();
+                        });
                     },
-                    prefill: {
-                        email: document.getElementById('email').value,
-                        name: 'Demo User'
-                        contact: '9999999999'
-                    },
-                    theme: { color: '#667eea' },
                     modal: {
                         ondismiss: function() {
-                            showResult('Payment cancelled by user', 'error');
-                            btn.disabled = false;
-                            btn.textContent = 'Start Payment';
+                            showMsg('Payment cancelled.', 'error');
+                            resetBtn();
                         }
                     }
                 };
 
-                const rzp = new Razorpay(options);
+                var rzp = new Razorpay(options);
                 rzp.open();
-
-            } catch (error) {
-                showResult('Error: ' + error.message, 'error');
-                btn.disabled = false;
-                btn.textContent = 'Start Payment';
-            }
-        }
-
-        function showResult(message, type) {
-            const result = document.getElementById('result');
-            result.textContent = message;
-            result.className = 'result ' + type;
-            result.style.display = 'block';
-        }
+            })
+            .catch(function(e) {
+                showMsg('Error: ' + e.message, 'error');
+                resetBtn();
+            });
+        });
     </script>
 </body>
 </html>

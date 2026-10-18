@@ -34,7 +34,9 @@ app.use(helmet({
         "'unsafe-inline'",
         "'unsafe-hashes'",
         "https://cdn.jsdelivr.net",
-        "https://checkout.razorpay.com"
+        "https://checkout.razorpay.com",
+        "https://api.razorpay.com",
+        "https://cdn.razorpay.com"
       ],
       scriptSrcAttr: ["'unsafe-inline'"],
       scriptSrcElem: [
@@ -42,7 +44,8 @@ app.use(helmet({
         "'unsafe-inline'",
         "https://cdn.jsdelivr.net",
         "https://checkout.razorpay.com",
-        "https://api.razorpay.com"
+        "https://api.razorpay.com",
+        "https://cdn.razorpay.com"
       ],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
@@ -51,14 +54,17 @@ app.use(helmet({
         "https://cdn.jsdelivr.net",
         "https://checkout.razorpay.com",
         "https://api.razorpay.com",
-        "https://lumberjack.razorpay.com"
+        "https://cdn.razorpay.com",
+        "https://lumberjack.razorpay.com",
+        "https://*.razorpay.com"
       ],
       frameSrc: [
         "'self'",
         "https://checkout.razorpay.com",
-        "https://api.razorpay.com"
+        "https://api.razorpay.com",
+        "https://*.razorpay.com"
       ],
-      fontSrc: ["'self'", "https://checkout.razorpay.com"],
+      fontSrc: ["'self'", "https://checkout.razorpay.com", "https://cdn.razorpay.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"]
     }
