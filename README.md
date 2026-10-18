@@ -152,6 +152,11 @@ Password: DemoPassword123!
 
 \- PostgreSQL 16 (Neon)
 
+Payment Integration:
+- Razorpay Payment Gateway
+- HMAC-SHA256 signature verification
+- Webhook event handling
+- Payment transaction audit trail
 
 
 \*\*Authentication:\*\*
@@ -341,6 +346,13 @@ multi-tenant-saas-backend/
 \- `PUT /api/v1/resources/:id` - Update resource
 
 \- `DELETE /api/v1/resources/:id` - Delete resource
+
+### Billing (Razorpay)
+- `POST /api/v1/billing/order`   - Create Razorpay payment order
+- `POST /api/v1/billing/verify`  - Verify payment signature & activate subscription
+- `GET  /api/v1/billing/info`    - Get billing info and payment history
+- `POST /api/v1/billing/cancel`  - Cancel subscription at period end
+- `POST /api/v1/billing/webhook` - Handle Razorpay webhook events
 
 
 
