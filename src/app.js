@@ -21,6 +21,14 @@ const usageRoutes = require('./routes/usage.routes');
 // Initialize Express app
 const app = express();
 
+// Billing test page - must be BEFORE helmet to bypass all security headers
+app.get('/billing-test', (req, res) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.removeHeader('X-Frame-Options');
+  res.sendFile(require('path').join(__dirname, 'public', 'billing-test.html'));
+});
+
 // Trust proxy (important for rate limiting behind load balancer)
 app.set('trust proxy', 1);
 
