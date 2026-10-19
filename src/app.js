@@ -175,8 +175,10 @@ app.use('/api/v1/usage', usageRoutes);
 // Billing routes (Razorpay)
 app.use('/api/v1/billing', require('./routes/billing.routes'));
 
-// Billing test page
+// Billing test page - served without CSP to allow Razorpay
 app.get('/billing-test', (req, res) => {
+  res.removeHeader('Content-Security-Policy');
+  res.removeHeader('X-Content-Security-Policy');
   res.sendFile(path.join(__dirname, 'public', 'billing-test.html'));
 });
 
